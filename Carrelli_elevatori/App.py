@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import datetime
 import os
-from domande import DOMANDE
+from domande import domande
 
 # Configurazione della pagina
 st.set_page_config(page_title="Test Carrelli Elevatori", layout="wide", page_icon="🦺")
