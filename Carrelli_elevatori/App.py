@@ -1,5 +1,3 @@
-# app.py
-
 import streamlit as st
 import pandas as pd
 import datetime
@@ -46,7 +44,10 @@ if st.session_state.test_avviato:
     for i, domanda in enumerate(DOMANDE):
         st.markdown(f"**Domanda {i+1}:** {domanda['testo']}")
         if "immagine" in domanda:
-            st.image(domanda["immagine"], width=400)
+            if os.path.exists(domanda["immagine"]):
+                st.image(domanda["immagine"], width=400)
+            else:
+                st.warning(f"⚠️ Immagine non trovata: {domanda['immagine']}")
         risposta = st.radio("Scegli la risposta:", domanda["opzioni"], key=f"q_{i}")
         risposte_utente.append(risposta)
 
