@@ -57,7 +57,7 @@ if st.session_state.test_avviato:
 
         for i, domanda in enumerate(domande):
             scelta = risposte_utente[i]
-            corretta = domanda["opzioni"][domanda["corretta"]]
+            corretta = domanda["opzioni"][domanda["risposta_corretta"]]
             if scelta == corretta:
                 punteggio += 1
                 st.success(f"✅ Domanda {i+1}: Corretta")
