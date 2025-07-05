@@ -41,7 +41,7 @@ if st.session_state.test_avviato:
     st.markdown("---")
     st.subheader("📋 Test – 15 domande a risposta multipla")
 
-    for i, domanda in enumerate(DOMANDE):
+    for i, domanda in enumerate(domande):
         st.markdown(f"**Domanda {i+1}:** {domanda['testo']}")
         if "immagine" in domanda:
             if os.path.exists(domanda["immagine"]):
@@ -55,7 +55,7 @@ if st.session_state.test_avviato:
         st.markdown("---")
         st.subheader("📊 Risultato del test")
 
-        for i, domanda in enumerate(DOMANDE):
+        for i, domanda in enumerate(domande):
             scelta = risposte_utente[i]
             corretta = domanda["opzioni"][domanda["corretta"]]
             if scelta == corretta:
@@ -64,9 +64,9 @@ if st.session_state.test_avviato:
             else:
                 st.error(f"❌ Domanda {i+1}: Errata – Risposta corretta: {corretta}")
 
-        soglia = int(len(DOMANDE) * 0.8)
+        soglia = int(len(domande) * 0.8)
         superato = punteggio >= soglia
-        st.markdown(f"### Totale corrette: **{punteggio}/{len(DOMANDE)}**")
+        st.markdown(f"### Totale corrette: **{punteggio}/{len(domande)}**")
         st.success("✅ Test superato!" if superato else "❌ Test NON superato")
 
         # Salvataggio risultato
@@ -110,7 +110,7 @@ Nome: {st.session_state.nome}
 Codice Fiscale: {st.session_state.cf}
 Azienda: {st.session_state.azienda}
 Data/Ora: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}
-Punteggio: {punteggio}/{len(DOMANDE)}
+Punteggio: {punteggio}/{len(domande)}
 Esito: {'✅ SUPERATO' if superato else '❌ NON SUPERATO'}
 """
 
