@@ -93,3 +93,35 @@ if st.session_state.test_avviato:
 
         df_final.to_excel(file_path, index=False)
         st.info("📁 Risultati salvati correttamente in `risultati/risultati_test.xlsx`.")
+
+        # Invio email al termine del test
+        import smtplib
+        from email.mime.text import MIMEText
+
+        sender = st.secrets["email"]["sender"]
+        receiver = st.secrets["email"]["receiver"]
+        password = st.secrets["email"]["password"]
+
+        corpo = f"""
+🧾 TEST COMPLETATO
+
+Nome: {st.session_state.nome}
+Codice Fiscale: {st.session_state.cf}
+Azienda: {st.session_state.azienda}
+Data/Ora: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}
+Punteggio: {punteggio}/{len(DOMANDE)}
+Esito: {'✅ SUPERATO' if superato else '❌ NON SUPERATO'}
+"""
+
+        msg = MIMEText(corpo)
+        msg["Subject"] = f"📩 Test carrelli elevatori – {st.session_state.nome}"
+        msg["From"] = sender
+        msg["To"] = receiver
+
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(sender, password)
+                server.sendmail(sender, receiver, msg.as_string())
+            st.success("📤 Email inviata correttamente a 4Step.")
+        except Exception as e:
+            st.warning(f"❌ Errore nell'invio dell'email: {e}")
