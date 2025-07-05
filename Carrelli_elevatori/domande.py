@@ -1,15 +1,11 @@
 # domande.py
 
+import os
+
+# Path assoluto alla cartella immagini
+IMG_DIR = os.path.join(os.path.dirname(__file__), "immagini")
+
 DOMANDE = [
-    {
-        "testo": "Quale dei seguenti comportamenti è corretto durante la guida di un carrello elevatore?",
-        "opzioni": [
-            "Utilizzare il cellulare mentre si guida",
-            "Trasportare persone sul carrello",
-            "Indossare sempre le cinture di sicurezza se previste"
-        ],
-        "corretta": 2
-    },
     {
         "testo": "Quando deve essere effettuato il controllo giornaliero del carrello elevatore?",
         "opzioni": [
@@ -30,13 +26,13 @@ DOMANDE = [
     },
     {
         "testo": "Cosa rappresenta questa immagine?",
-        "immagine": "immagini/baricentro_ok.png",
         "opzioni": [
             "Baricentro instabile con rischio di ribaltamento",
-            "Baricentro stabile, condizione corretta",
+            "Baricentro stabile, condizioni corrette",
             "Carico eccentrico e instabile"
         ],
-        "corretta": 1
+        "corretta": 1,
+        "immagine": os.path.join(IMG_DIR, "baricentro_ok.png")
     },
     {
         "testo": "Cosa NON deve mai fare un operatore?",
@@ -58,86 +54,93 @@ DOMANDE = [
     },
     {
         "testo": "Cosa indica questa immagine?",
-        "immagine": "immagini/pendenza_errata.png",
         "opzioni": [
-            "Marcia corretta in salita con carico",
-            "Manovra corretta in pendenza",
-            "Errore pericoloso con rischio ribaltamento"
+            "Posizione corretta in pendenza",
+            "Pendenza errata",
+            "Manovra consentita"
         ],
-        "corretta": 2
+        "corretta": 1,
+        "immagine": os.path.join(IMG_DIR, "pendenza_errata.png")
     },
     {
-        "testo": "Qual è la prima cosa da controllare prima dell’uso del carrello?",
+        "testo": "In caso di guasto al carrello, cosa si deve fare?",
         "opzioni": [
-            "Livello olio motore",
-            "Funzionamento dei freni e dispositivi di sicurezza",
-            "Pulizia della cabina"
+            "Continuare fino alla fine del turno",
+            "Segnalare e fermare l’uso immediatamente",
+            "Ripararlo da soli"
         ],
         "corretta": 1
     },
     {
-        "testo": "In presenza di pedoni, come si deve comportare l’operatore?",
+        "testo": "Il carico deve essere:",
+        "opzioni": [
+            "Sollevato al massimo per sicurezza",
+            "Appoggiato direttamente sulla cabina",
+            "Stabile, centrato e ben fissato"
+        ],
+        "corretta": 2
+    },
+    {
+        "testo": "Chi può condurre un carrello elevatore?",
+        "opzioni": [
+            "Chiunque abbia buona vista",
+            "Solo chi ha frequentato un corso specifico",
+            "Chi ha la patente di guida"
+        ],
+        "corretta": 1
+    },
+    {
+        "testo": "Durante le manovre, l’operatore deve:",
+        "opzioni": [
+            "Parlare al cellulare per aggiornare il responsabile",
+            "Indossare dispositivi di protezione e mantenere attenzione",
+            "Aprire la porta laterale per visibilità"
+        ],
+        "corretta": 1
+    },
+    {
+        "testo": "Le forche del carrello devono essere tenute:",
+        "opzioni": [
+            "Sollevate al massimo",
+            "Sempre parallele al suolo e basse durante la marcia",
+            "Inclinate all’indietro durante la guida"
+        ],
+        "corretta": 1
+    },
+    {
+        "testo": "Cosa fare se una persona attraversa davanti al carrello?",
         "opzioni": [
             "Accelerare per passare prima",
-            "Fermarsi e dare precedenza",
-            "Suonare e proseguire"
-        ],
-        "corretta": 1
-    },
-    {
-        "testo": "Cosa rappresenta questa immagine?",
-        "immagine": "immagini/baricentro_errato.png",
-        "opzioni": [
-            "Baricentro interno e stabile",
-            "Carico instabile con rischio ribaltamento",
-            "Condizione ideale in curva"
-        ],
-        "corretta": 1
-    },
-    {
-        "testo": "Quando un carico è considerato sicuro?",
-        "opzioni": [
-            "Quando è ben centrato e stabile sulle forche",
-            "Quando è appoggiato lateralmente",
-            "Quando è legato con una corda qualsiasi"
-        ],
-        "corretta": 0
-    },
-    {
-        "testo": "Quale DPI è obbligatorio per legge durante l’uso in magazzino?",
-        "opzioni": [
-            "Casco antinfortunistico, se previsto dal DVR",
-            "Guanti da saldatore",
-            "Stivali di gomma"
-        ],
-        "corretta": 0
-    },
-    {
-        "testo": "Come si deve circolare negli spazi comuni?",
-        "opzioni": [
-            "A passo d’uomo e con attenzione agli incroci",
-            "Il più rapidamente possibile",
-            "Con il carico sempre sollevato"
-        ],
-        "corretta": 0
-    },
-    {
-        "testo": "Cosa rappresenta questa immagine?",
-        "immagine": "immagini/pendenza_corretta.png",
-        "opzioni": [
-            "Manovra errata in discesa",
-            "Posizione corretta con baricentro stabile",
-            "Curva pericolosa a pieno carico"
-        ],
-        "corretta": 1
-    },
-    {
-        "testo": "Chi è responsabile del corretto uso del carrello elevatore?",
-        "opzioni": [
-            "Solo il datore di lavoro",
-            "Il costruttore",
-            "L’operatore abilitato"
+            "Azionare il clacson e proseguire",
+            "Fermarsi immediatamente e dare la precedenza"
         ],
         "corretta": 2
+    },
+    {
+        "testo": "Cosa bisogna fare prima di usare un carrello ogni giorno?",
+        "opzioni": [
+            "Controllare visivamente e funzionalmente il mezzo",
+            "Accenderlo e provarlo direttamente",
+            "Pulirlo e lasciarlo acceso per scaldarlo"
+        ],
+        "corretta": 0
+    },
+    {
+        "testo": "L’uso improprio del carrello può:",
+        "opzioni": [
+            "Essere utile per aumentare la produttività",
+            "Causare incidenti gravi e danni a persone o cose",
+            "Essere tollerato se si ha esperienza"
+        ],
+        "corretta": 1
+    },
+    {
+        "testo": "Durante una curva il carrello va guidato:",
+        "opzioni": [
+            "Ad alta velocità per non rallentare la produzione",
+            "A velocità ridotta per evitare ribaltamenti",
+            "Con le forche alte per vedere meglio"
+        ],
+        "corretta": 1
     }
 ]
