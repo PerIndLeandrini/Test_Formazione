@@ -3,29 +3,29 @@ import pandas as pd
 import datetime
 import os
 from domande import domande
-from PIL import Image, ImageDraw, ImageFont
-import textwrap
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.image import MIMEImage
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
 
-# Config pagina
-st.set_page_config(page_title="Test Carrelli Elevatori", layout="wide", page_icon="🦺")
+# Configurazione della pagina
+st.set_page_config(page_title="Test Carrelli Elevatori", layout="wide", page_icon="🪺")
 
+# Stato persistente
 if "test_avviato" not in st.session_state:
     st.session_state.test_avviato = False
 
-st.markdown("<h2 style='color:#00c3ff'>🦺 Test – Carrelli Elevatori Semoventi</h2>", unsafe_allow_html=True)
+# Titolo principale
+st.markdown("<h2 style='color:#00c3ff'>🪺 Test – Carrelli Elevatori Semoventi</h2>", unsafe_allow_html=True)
 
-# FORM PARTECIPANTE
+# FORM INIZIALE
 if not st.session_state.test_avviato:
     with st.form("dati_partecipante"):
         st.subheader("Dati del partecipante")
         nome = st.text_input("Nome e Cognome", max_chars=100)
         cf = st.text_input("Codice Fiscale (obbligatorio)", max_chars=16)
         azienda = st.text_input("Azienda")
-        accetto = st.checkbox("✅ Accetto il trattamento dei dati ai fini formativi (privacy)")
+        accetto = st.checkbox("✅ Dichiaro di accettare il trattamento dei dati ai fini formativi (privacy)")
         avvia = st.form_submit_button("Inizia il test")
 
         if avvia:
@@ -37,7 +37,7 @@ if not st.session_state.test_avviato:
                 st.session_state.cf = cf.upper()
                 st.session_state.azienda = azienda
 
-# SEZIONE TEST
+# TEST
 if st.session_state.test_avviato:
     risposte_utente = []
     punteggio = 0
@@ -73,7 +73,7 @@ if st.session_state.test_avviato:
         st.markdown(f"### Totale corrette: **{punteggio}/{len(domande)}**")
         st.success("✅ Test superato!" if superato else "❌ Test NON superato")
 
-        # Salva Excel
+        # Salvataggio risultato Excel
         risultato = {
             "Data": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
             "Nome": st.session_state.nome,
@@ -96,90 +96,56 @@ if st.session_state.test_avviato:
             df_final = df
 
         df_final.to_excel(file_path, index=False)
-        st.info("📁 Risultati salvati in `risultati/risultati_test.xlsx`.")
+        st.info("Risultati salvati in risultati/risultati_test.xlsx")
 
-        # === CREAZIONE IMMAGINE TEST ===
-        def crea_immagine_test(nome, cf, azienda, punteggio, domande, risposte_utente):
-            width, height = 1200, 1800 + len(domande)*50
-            img = Image.new('RGB', (width, height), color='white')
-            draw = ImageDraw.Draw(img)
-
-            try:
-                font_title = ImageFont.truetype("arial.ttf", 36)
-                font_text = ImageFont.truetype("arial.ttf", 20)
-            except:
-                font_title = font_text = ImageFont.load_default()
-
-            y = 20
-            draw.text((width//2 - 200, y), "Riepilogo Test Carrelli Elevatori", fill="black", font=font_title)
-            y += 60
-            draw.text((50, y), f"Nome: {nome}", fill="black", font=font_text); y += 30
-            draw.text((50, y), f"Codice Fiscale: {cf}", fill="black", font=font_text); y += 30
-            draw.text((50, y), f"Azienda: {azienda}", fill="black", font=font_text); y += 30
-            draw.text((50, y), f"Punteggio: {punteggio}/{len(domande)}", fill="black", font=font_text); y += 30
-            draw.text((50, y), "Esito: " + ("SUPERATO" if punteggio >= int(len(domande)*0.8) else "NON SUPERATO"),
-                      fill="green" if punteggio >= int(len(domande)*0.8) else "red", font=font_text)
-            y += 50
-
-            for i, domanda in enumerate(domande):
-                testo = f"{i+1}. {domanda['testo']}"
-                risposta = risposte_utente[i]
-                corretta = domanda["opzioni"][domanda["risposta_corretta"]]
-                colore = "green" if risposta == corretta else "red"
-                wrap_testo = textwrap.fill(testo, width=100)
-
-                draw.text((50, y), wrap_testo, fill="black", font=font_text); y += 40
-                draw.text((80, y), f"Risposta data: {risposta}", fill=colore, font=font_text); y += 30
-                if risposta != corretta:
-                    draw.text((80, y), f"Risposta corretta: {corretta}", fill="blue", font=font_text); y += 30
-                y += 10
-
-            os.makedirs("report_img", exist_ok=True)
-            img_path = f"report_img/test_{cf}.png"
-            img.save(img_path)
-            return img_path
-
-        img_path = crea_immagine_test(
-            st.session_state.nome,
-            st.session_state.cf,
-            st.session_state.azienda,
-            punteggio,
-            domande,
-            risposte_utente
-        )
-
-        # === INVIO EMAIL CON IMMAGINE ===
+        # Invio email HTML + allegato Excel
         sender = st.secrets["email"]["sender"]
         receiver = st.secrets["email"]["receiver"]
         password = st.secrets["email"]["password"]
 
         msg = MIMEMultipart()
-        msg["Subject"] = f"Test carrelli elevatori – {st.session_state.nome}"
+        msg["Subject"] = f"📩 Test carrelli elevatori – {st.session_state.nome}"
         msg["From"] = sender
         msg["To"] = receiver
 
-        corpo = f"""
-🧾 TEST COMPLETATO
+        # Corpo HTML
+        html = f"""
+        <h3>📅 TEST COMPLETATO</h3>
+        <b>NOMINATIVO:</b> {st.session_state.nome}<br>
+        <b>Codice Fiscale:</b> {st.session_state.cf}<br>
+        <b>Azienda:</b> {st.session_state.azienda}<br>
+        <b>Data/Ora:</b> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}<br>
+        <b>Punteggio:</b> {punteggio}/{len(domande)}<br>
+        <b>Esito:</b> {'<span style="color:green">✅ SUPERATO</span>' if superato else '<span style="color:red">❌ NON SUPERATO</span>'}<br><hr>
+        <h4>📒 Domande e risposte fornite:</h4>
+        """
 
-Nome: {st.session_state.nome}
-Codice Fiscale: {st.session_state.cf}
-Azienda: {st.session_state.azienda}
-Data/Ora: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}
-Punteggio: {punteggio}/{len(domande)}
-Esito: {"✅ SUPERATO" if superato else "❌ NON SUPERATO"}
+        for i, domanda in enumerate(domande):
+            testo = domanda["testo"]
+            risposta_data = risposte_utente[i]
+            risposta_corretta = domanda["opzioni"][domanda["risposta_corretta"]]
+            if risposta_data == risposta_corretta:
+                colore = "green"
+                emoji = "✅"
+                correzione = ""
+            else:
+                colore = "red"
+                emoji = "❌"
+                correzione = f"<br><b>Risposta corretta:</b> {risposta_corretta}"
+            html += f"<p><b>Domanda {i+1}:</b> {testo}<br><span style='color:{colore}'>{emoji} Risposta data: {risposta_data}</span>{correzione}</p>"
 
-In allegato trovi il riepilogo visivo del test.
-"""
-        msg.attach(MIMEText(corpo, "plain"))
+        msg.attach(MIMEText(html, "html"))
 
-        with open(img_path, "rb") as f:
-            img_part = MIMEImage(f.read(), name=os.path.basename(img_path))
-            msg.attach(img_part)
+        # Allegato Excel
+        with open(file_path, "rb") as f:
+            part = MIMEApplication(f.read(), _subtype="xlsx")
+            part.add_header('Content-Disposition', 'attachment', filename="risultati_test.xlsx")
+            msg.attach(part)
 
         try:
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
                 server.login(sender, password)
                 server.sendmail(sender, receiver, msg.as_string())
-            st.success("📤 Email inviata con allegato immagine.")
+            st.success("📤 Email inviata correttamente con allegato.")
         except Exception as e:
-            st.warning(f"❌ Errore nell'invio dell'email: {e}")
+            st.warning(f"❌ Errore invio email: {e}")
