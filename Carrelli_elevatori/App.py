@@ -112,17 +112,9 @@ Azienda: {st.session_state.azienda}
 Data/Ora: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}
 Punteggio: {punteggio}/{len(domande)}
 Esito: {'✅ SUPERATO' if superato else '❌ NON SUPERATO'}
+
+📋 Risposte fornite:
 """
 
-        msg = MIMEText(corpo)
-        msg["Subject"] = f"📩 Test carrelli elevatori – {st.session_state.nome}"
-        msg["From"] = sender
-        msg["To"] = receiver
-
-        try:
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-                server.login(sender, password)
-                server.sendmail(sender, receiver, msg.as_string())
-            st.success("📤 Email inviata correttamente a 4Step.")
-        except Exception as e:
-            st.warning(f"❌ Errore nell'invio dell'email: {e}")
+for i, domanda in enumerate(domande):
+    corpo += f"\nDomanda {i+1}: {domanda['testo']}\nRisposta: {risposte_utente[i]}\n"
