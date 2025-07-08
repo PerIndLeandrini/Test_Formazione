@@ -2,42 +2,46 @@ import streamlit as st
 import pandas as pd
 import datetime
 import os
-from domande import domande
 import smtplib
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
+from domande import domande
 
-# Configurazione della pagina
 st.set_page_config(page_title="Test Carrelli Elevatori", layout="wide", page_icon="🪺")
 
-# Stato persistente
 if "test_avviato" not in st.session_state:
     st.session_state.test_avviato = False
 
-# Titolo principale
-st.markdown("<h2 style='color:#00c3ff'>🪺 Test – Carrelli Elevatori Semoventi</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='color:#00c3ff'>🪧 Test – Carrelli Elevatori Semoventi</h2>", unsafe_allow_html=True)
 
-# FORM INIZIALE
 if not st.session_state.test_avviato:
     with st.form("dati_partecipante"):
         st.subheader("Dati del partecipante")
         nome = st.text_input("Nome e Cognome", max_chars=100)
         cf = st.text_input("Codice Fiscale (obbligatorio)", max_chars=16)
         azienda = st.text_input("Azienda")
+
+        st.subheader("📧 RIFERIMENTI MAIL")
+        email_partecipante = st.text_input("Email partecipante (obbligatoria)")
+        email_altre = st.text_input("Altre email per copia test (separate da virgola, opzionali)")
+        copia_simone = st.checkbox("Inviare copia anche a Simone Leandrini?")
+
         accetto = st.checkbox("✅ Dichiaro di accettare il trattamento dei dati ai fini formativi (privacy)")
         avvia = st.form_submit_button("Inizia il test")
 
         if avvia:
-            if not (nome and cf and azienda and accetto):
+            if not (nome and cf and azienda and accetto and email_partecipante):
                 st.error("Compila tutti i campi richiesti e accetta la privacy.")
             else:
                 st.session_state.test_avviato = True
                 st.session_state.nome = nome
                 st.session_state.cf = cf.upper()
                 st.session_state.azienda = azienda
+                st.session_state.email_partecipante = email_partecipante
+                st.session_state.email_altre = email_altre
+                st.session_state.copia_simone = copia_simone
 
-# TEST
 if st.session_state.test_avviato:
     risposte_utente = []
     punteggio = 0
@@ -70,10 +74,11 @@ if st.session_state.test_avviato:
 
         soglia = int(len(domande) * 0.8)
         superato = punteggio >= soglia
+        esito = "✅ SUPERATO" if superato else "❌ NON SUPERATO"
         st.markdown(f"### Totale corrette: **{punteggio}/{len(domande)}**")
-        st.success("✅ Test superato!" if superato else "❌ Test NON superato")
+        st.success("Test superato!" if superato else "Test NON superato")
 
-        # Salvataggio risultato Excel
+        # Salva in Excel
         risultato = {
             "Data": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
             "Nome": st.session_state.nome,
@@ -87,65 +92,53 @@ if st.session_state.test_avviato:
 
         df = pd.DataFrame([risultato])
         os.makedirs("risultati", exist_ok=True)
-        file_path = "risultati/risultati_test.xlsx"
+        file_path = f"risultati/{st.session_state.cf}_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+        df.to_excel(file_path, index=False)
+        st.info(f"📁 Risultati salvati in `{file_path}`.")
 
-        if os.path.exists(file_path):
-            df_exist = pd.read_excel(file_path)
-            df_final = pd.concat([df_exist, df], ignore_index=True)
-        else:
-            df_final = df
+        # Componi lista email destinatari
+        destinatari = [st.session_state.email_partecipante]
+        if st.session_state.email_altre:
+            destinatari += [e.strip() for e in st.session_state.email_altre.split(",") if e.strip()]
+        if st.session_state.copia_simone:
+            destinatari.append("perindleandrini@4step.it")
 
-        df_final.to_excel(file_path, index=False)
-        st.info("Risultati salvati in risultati/risultati_test.xlsx")
-
-        # Invio email HTML + allegato Excel
+        # Componi email
         sender = st.secrets["email"]["sender"]
-        receiver = st.secrets["email"]["receiver"]
         password = st.secrets["email"]["password"]
 
         msg = MIMEMultipart()
-        msg["Subject"] = f"📩 Test carrelli elevatori – {st.session_state.nome}"
+        msg["Subject"] = f"📧 Test carrelli elevatori – {st.session_state.nome}"
         msg["From"] = sender
-        msg["To"] = receiver
+        msg["To"] = ", ".join(destinatari)
 
-        # Corpo HTML
-        html = f"""
-        <h3>📅 TEST COMPLETATO</h3>
-        <b>NOMINATIVO:</b> {st.session_state.nome}<br>
-        <b>Codice Fiscale:</b> {st.session_state.cf}<br>
-        <b>Azienda:</b> {st.session_state.azienda}<br>
-        <b>Data/Ora:</b> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}<br>
-        <b>Punteggio:</b> {punteggio}/{len(domande)}<br>
-        <b>Esito:</b> {'<span style="color:green">✅ SUPERATO</span>' if superato else '<span style="color:red">❌ NON SUPERATO</span>'}<br><hr>
-        <h4>📒 Domande e risposte fornite:</h4>
-        """
+        corpo = f"""
+📄 TEST COMPLETATO
 
+NOMINATIVO: {st.session_state.nome}
+Codice Fiscale: {st.session_state.cf}
+Azienda: {st.session_state.azienda}
+Data/Ora: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}
+Punteggio: {punteggio}/{len(domande)}
+Esito: {esito}
+"""
         for i, domanda in enumerate(domande):
-            testo = domanda["testo"]
-            risposta_data = risposte_utente[i]
-            risposta_corretta = domanda["opzioni"][domanda["risposta_corretta"]]
-            if risposta_data == risposta_corretta:
-                colore = "green"
-                emoji = "✅"
-                correzione = ""
-            else:
-                colore = "red"
-                emoji = "❌"
-                correzione = f"<br><b>Risposta corretta:</b> {risposta_corretta}"
-            html += f"<p><b>Domanda {i+1}:</b> {testo}<br><span style='color:{colore}'>{emoji} Risposta data: {risposta_data}</span>{correzione}</p>"
+            corretta = domanda["opzioni"][domanda["risposta_corretta"]]
+            scelta = risposte_utente[i]
+            simbolo = "✅" if scelta == corretta else "❌"
+            corpo += f"\n{simbolo} Domanda {i+1}: {domanda['testo']}\nRisposta data: {scelta}\nRisposta corretta: {corretta}\n"
 
-        msg.attach(MIMEText(html, "html"))
+        msg.attach(MIMEText(corpo, "plain"))
 
-        # Allegato Excel
         with open(file_path, "rb") as f:
-            part = MIMEApplication(f.read(), _subtype="xlsx")
-            part.add_header('Content-Disposition', 'attachment', filename="risultati_test.xlsx")
-            msg.attach(part)
+            attachment = MIMEApplication(f.read(), _subtype="xlsx")
+            attachment.add_header('Content-Disposition', 'attachment', filename=os.path.basename(file_path))
+            msg.attach(attachment)
 
         try:
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
                 server.login(sender, password)
-                server.sendmail(sender, receiver, msg.as_string())
-            st.success("📤 Email inviata correttamente con allegato.")
+                server.sendmail(sender, destinatari, msg.as_string())
+            st.success("Email inviata correttamente ai destinatari indicati.")
         except Exception as e:
-            st.warning(f"❌ Errore invio email: {e}")
+            st.warning(f"Errore invio email: {e}")
